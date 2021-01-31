@@ -1,0 +1,98 @@
+---
+name: Build
+on:
+  push:
+    branches: [master]
+
+jobs:
+  # lint:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     # Install golang
+  #     - uses: actions/setup-go@v2
+  #       with:
+  #         go-version: '^1.13.1'
+
+  #     # Setup gopath
+  #     - name: Setting up GOPATH 
+  #       run: |
+  #         echo "GOPATH=${GITHUB_WORKSPACE}/go" >> $GITHUB_ENV
+        
+  #     # Checkout to the latest commit
+  #     # On specific directory/path
+  #     - uses: actions/checkout@v2
+  #       with:
+  #         path: go/src/github.com/${{github.repository}}
+
+  #     #TODO: Add Dockerfile linting
+  #     # Running go-lint
+  #     - name: Checking Go-Lint
+  #       run : |
+  #         sudo apt-get update && sudo apt-get install golint
+  #         cd go/src/github.com/${{github.repository}}
+  #         make gotasks
+
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Check Docker Version
+        run: docker --version
+      - name: Install Latest Docker
+        run: |
+          curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+          sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu  $(lsb_release -cs)  stable"
+          sudo apt-get update
+          sudo apt-get install docker-ce
+      - name: Check Docker Version
+        run: docker --version
+        
+
+      # Install golang
+      - uses: actions/setup-go@v2
+        with:
+          go-version: '^1.13.1'
+
+      # Setup gopath
+      - name: Setting up GOPATH 
+        run: |
+          echo "GOPATH=${GITHUB_WORKSPACE}/go" >> $GITHUB_ENV
+          
+      # Checkout to the latest commit
+      # On specific directory/path
+      - uses: actions/checkout@v2
+        with:
+          path: go/src/github.com/${{github.repository}}
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+        with:
+          platforms: all
+
+      - name: Set up Docker Buildx
+        id: buildx
+        uses: docker/setup-buildx-action@v1
+        with:
+          version: v0.5.1
+
+      - name: Build Docker Image
+        env:
+          DOCKER_REPO: litmuschaos
+          DOCKER_IMAGE: go-runner
+          DOCKER_TAG: ci
+        run: |
+          cd go/src/github.com/${{github.repository}}
+          docker buildx ls
+          sudo docker buildx build --file build/Dockerfile --progress plane --platform linux/arm64,linux/amd64 --no-cache --tag litmuschaos/go-runner:ci .
+
+  # trivy: 
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v2
+
+  #     - name: setup trivy
+  #       run: |
+  #         wget https://github.com/aquasecurity/trivy/releases/download/v0.11.0/trivy_0.11.0_Linux-64bit.tar.gz
+  #         tar zxvf trivy_0.11.0_Linux-64bit.tar.gz
+  #         make trivy-check
