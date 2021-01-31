@@ -1,0 +1,47 @@
+apiVersion: litmuschaos.io/v1alpha1
+description:
+  message: |
+    {{ .Description }}
+kind: ChaosExperiment
+metadata:
+  name: {{ .Name }}
+spec:
+  definition:
+    scope: {{ .Scope }}
+    permissions: 
+      {{- range .Permissions }}
+      - apiGroups:
+        {{- range .APIGroups }} 
+          - "{{ . }}"
+        {{- end}}
+        resources:
+        {{- range .Resources }} 
+          - "{{ . }}"
+        {{- end}}
+        verbs:
+        {{- range .Verbs }} 
+          - "{{ . }}"
+        {{- end}}
+      {{- end}}
+    image: "litmuschaos/go-runner:latest"
+    args:
+    - -c
+    - ./experiments -name {{ .Name }}
+    command:
+    - /bin/bash
+    env:
+
+    - name: TOTAL_CHAOS_DURATION
+      value: '' 
+
+    - name: CHAOS_INTERVAL
+      value: ''
+
+    - name: LIB
+      value: ''
+
+    - name: RAMP_TIME
+      value: ''
+      
+    labels:
+      experiment: {{ .Name }} 
