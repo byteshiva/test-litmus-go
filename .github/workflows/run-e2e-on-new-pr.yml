@@ -1,11 +1,11 @@
-name: Running-E2E
+name: E2E
 on:
   pull_request:
     branches: [master]
     types: [edited, opened, synchronize, reopened]
 
 jobs:
-  Tests:
+  Generic-Tests:
     if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
     steps:
