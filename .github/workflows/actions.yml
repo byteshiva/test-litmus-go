@@ -10,7 +10,6 @@ on:
 
 jobs:
   PodDeleteChaos:
-    if: "!contains(github.event.head_commit.message, '[skip ci]')"
     runs-on: ubuntu-latest
     steps:
       
@@ -47,22 +46,39 @@ jobs:
           ACTIONS_ALLOW_UNSECURE_COMMANDS: true
 
       - name: Setup Litmus
-        uses: mayadata-io/github-chaos-actions@v0.3.1
+        uses: litmuschaos/github-chaos-actions@v0.3.1
         env:
           INSTALL_LITMUS: true
 
       - name: Running Litmus pod delete chaos experiment
-        if: "contains(github.event.head_commit.message, '[Pod Delete]') || contains(github.event.head_commit.message, '[Run CI]') || env.TEST_RUN != 'true'"
-        uses: mayadata-io/github-chaos-actions@v0.3.1
+        uses: litmuschaos/github-chaos-actions@v0.3.1
         env:
+          APP_NS: default
+          APP_LABEL: run=nginx
+          APP_KIND: deployment
           EXPERIMENT_NAME: pod-delete
           EXPERIMENT_IMAGE: litmuschaos/go-runner
           EXPERIMENT_IMAGE_TAG: ci
           IMAGE_PULL_POLICY: IfNotPresent
           JOB_CLEANUP_POLICY: delete
+          
+      - name: Running pod-cpu-hog chaos experiment
+        uses: litmuschaos/github-chaos-actions@v0.3.1
+        env:
+          APP_NS: default
+          APP_LABEL: run=nginx
+          APP_KIND: deployment        
+          EXPERIMENT_NAME: pod-cpu-hog
+          EXPERIMENT_IMAGE: litmuschaos/go-runner
+          EXPERIMENT_IMAGE_TAG: ci
+          IMAGE_PULL_POLICY: IfNotPresent
+          JOB_CLEANUP_POLICY: delete       
+          TARGET_CONTAINER: nginx
+          TOTAL_CHAOS_DURATION: 60
+          CPU_CORES: 1
 
       - name: Uninstall Litmus
-        uses: mayadata-io/github-chaos-actions@v0.3.1
+        uses: litmuschaos/github-chaos-actions@v0.3.1
         env:          
           LITMUS_CLEANUP: true
 
